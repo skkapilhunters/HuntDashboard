@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deploy Tool</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Inter,sans-serif;
+}
+
+body{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#0f172a;
+    color:white;
+    padding:20px;
+}
+
+.card{
+    width:100%;
+    max-width:800px;
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:20px;
+    padding:25px;
+}
+
+h1{
+    margin-bottom:20px;
+    font-size:28px;
+}
+
+.data-box{
+    min-height:180px;
+    background:#111827;
+    border-radius:12px;
+    padding:15px;
+    overflow:auto;
+    white-space:pre-wrap;
+    word-break:break-word;
+    border:1px solid rgba(255,255,255,0.1);
+}
+
+.buttons{
+    display:flex;
+    gap:10px;
+    margin-top:15px;
+}
+
+button{
+    border:none;
+    cursor:pointer;
+    padding:12px 18px;
+    border-radius:10px;
+    color:white;
+    font-weight:600;
+    transition:.2s;
+}
+
+.paste-btn{
+    background:#2563eb;
+}
+
+.send-btn{
+    background:#16a34a;
+}
+
+button:hover{
+    transform:translateY(-2px);
+}
+
+.status{
+    margin-top:15px;
+    font-weight:600;
+}
+
+.response{
+    margin-top:20px;
+    background:#111827;
+    border-radius:12px;
+    padding:15px;
+    max-height:350px;
+    overflow:auto;
+    white-space:pre-wrap;
+}
+
+.loader{
+    width:20px;
+    height:20px;
+    border:3px solid rgba(255,255,255,0.2);
+    border-top-color:white;
+    border-radius:50%;
+    animation:spin .8s linear infinite;
+    display:none;
+}
+
+@keyframes spin{
+    to{
+        transform:rotate(360deg);
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <h1>🚀 Deploy Tool</h1>
+
+    <div id="dataBox" class="data-box">
+Click "Paste Clipboard" to load JSON
+    </div>
+
+    <div class="buttons">
+        <button class="paste-btn" onclick="pasteData()">
+            📋 Paste Clipboard
+        </button>
+
+        <button class="send-btn" onclick="sendData()">
+            🚀 Send Request
+        </button>
+
+        <div id="loader" class="loader"></div>
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <div id="response" class="response">
+Response will appear here...
+    </div>
+
+</div>
+
+<script>
+
+let currentData = null;
+
+async function pasteData(){
+    try{
+
+        const clipboardText = await navigator.clipboard.readText();
+
+        currentData = JSON.parse(clipboardText);
+
+        document.getElementById("dataBox").textContent =
+            JSON.stringify(currentData,null,2);
+
+        document.getElementById("status").innerHTML =
+            "✅ JSON loaded from clipboard";
+
+    }catch(err){
+
+        document.getElementById("status").innerHTML =
+            "❌ Clipboard doesn't contain valid JSON";
+
+    }
+}
+
+async function sendData(){
+
+    if(!currentData){
+        alert("Paste JSON first");
+        return;
+    }
+
+    const loader = document.getElementById("loader");
+
+    loader.style.display="block";
+
+    try{
+
+        const response = await fetch(
+            "https://gnfzxjtvncioseapmmja.supabase.co/functions/v1/Post-deploy",
+            {
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body:JSON.stringify(currentData)
+            }
+        );
+
+        const text = await response.text();
+
+        document.getElementById("status").innerHTML =
+            `✅ Status: ${response.status}`;
+
+        document.getElementById("response").textContent = text;
+
+    }catch(err){
+
+        document.getElementById("status").innerHTML =
+            "❌ Request Failed";
+
+        document.getElementById("response").textContent =
+            err.message;
+
+    }
+
+    loader.style.display="none";
+}
+
+</script>
+
+</body>
+</html>
